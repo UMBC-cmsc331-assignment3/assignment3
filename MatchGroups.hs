@@ -1,0 +1,6 @@
+-- File name: MatchGroups.hs
+-- Project:   cmsc331 assignment 3
+-- Authors: Steven Hudak
+--          Christopher Blake
+--          Tae Song
+--          Patrick Bettinger
