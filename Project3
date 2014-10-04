@@ -4,22 +4,26 @@
 (define (makelist n)
   (if (= n 1)
     (list 1)
-    (cons n (makelist (- n 1)))))
+    (cons n (makelist (- n 1) ) )
+  )
+)
 
 
 ; Randomize the list
 (define (random-sort list)
   (sort list
     (lambda (x y)
-      (equal? 0 (random 2)))))
+      (equal? 0 (random 2)) 
+    )
+  )
+)
 
 
 ; Break into k-sized tuples
 (define (split-by lst k)
   (if (not (null? lst))
-    (cons (sort (take lst k) < ) (split-by (drop lst k) k))
+    (cons (sort (take lst k) < ) (split-by (drop lst k) k) )
     '() ))
-
 
 ; Number of occurences in a list
 (define (occurence x lst)
@@ -136,9 +140,86 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(define (append . lsts)
+  (cond
+    ((null? lsts) '())
+    ((null? (car lsts)) (apply append (cdr lsts)))
+    (else (cons (caar lsts) (apply append (cdar lsts) (cdr lsts))))))
 
+; Break into k-sized tuples, no sorting of results
+(define (split-by-no-sort lst k)
+  (if (not (null? lst))
+    (cons (take lst k) (split-by-no-sort (drop lst k) k) )
+    '() ))
 
+(define (total-occurences lst)
+  (if (null? lst) 
+    0
+    (+ 
+      (total-occurences (cdr lst)) 
+      (occurence (car lst) (cdr lst) ) 
+    )
+  )
+)
 
+(define (format-value x)
+  (string-append
+    (make-string 
+      (- 2 (string-length x)) 
+      #\ 
+    ) 
+    x
+  )
+)
+
+(define (format-cell lst)
+  (if (not (null? lst))
+    (begin
+      (display (format-value (number->string (car (take lst 1)) )))
+      (if (> (length lst) 1)
+        (display " ")
+      )
+      (format-cell (drop lst 1))
+    )
+  )
+)
+
+(define (format-group lst)
+  (display "(")
+  (format-cell lst)
+  (display ")")
+)
+
+(define (display-groups lst)
+  (if (not (null? lst))
+    (begin
+      (format-group (car (take lst 1)) )
+      (display " ")
+      (display-groups (drop lst 1))
+    )
+  )
+) 
+  
+(define (display-the-list lst n idx)
+  (if (not (null? lst))
+    (begin 
+      (display (vector-ref msgs idx))
+      (display-groups (take lst n))
+      (display "\n")
+      (display-the-list (drop lst n) n (+ idx 1) )
+    )
+  )
+)
+
+(define (display-if-ok lst n k )
+  (if (= (total-occurences lst) 0)
+    (begin
+      (display-the-list lst (/ n k) 0)
+      1
+    )
+    0
+  )
+)
 
 
 ;(display (list-of-lists 10 2 2) )
@@ -147,29 +228,67 @@
 ;(display (make-group 10 2))
 ;(display (make-groupings 10 2 8))
 
-(define n 20)
-(define k 4)
 
-(display "\n")
-(display "\n")
-(display   "Assignment 1: ")
-(display (make-group n k))
-(display "\nAssignment 2: ")
-(display (make-group n k))
-(display "\nAssignment 3: ")
-(display (make-group n k))
-(display "\nMidterm:      ")
-(display (make-group n k))
-(display "\nAssignment 4: ")
-(display (make-group n k))
-(display "\nAssignment 5: ")
-(display (make-group n k))
-(display "\nAssignment 6: ")
-(display (make-group n k))
-(display "\nFinal Exam:   ")
-(display (make-group n k))
-(display "\n")
-(display "\n")
-(display "\n")
+(define msgs 
+  (vector 
+    "\n\nAssignment1: " 
+    "Assignment2: " 
+    "Assignment3: "
+    "Midterm:     "
+    "Assignment4: "
+    "Assignment5: "
+    "Assignment6: "
+    "Final Exam:  "
+  )
+)
+
+;(display (random-sort (makelist 40) ) )
+;(display "\n")
+
+(define (get-data n k)
+  (split-by
+    (append 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+      (random-sort (makelist n)) 
+    )
+    k
+  )
+)
 
 
+(define (run-test n k totalTries)
+  (if (not (= (modulo n k) 0))
+    (begin
+      (display "Can not form full groups of students with n=")
+      (display n)
+      (display " and k=")
+      (display k)
+      (display "\n\n")
+    )
+    (if (<= totalTries 0)
+      (begin
+        (display "Could not find a solution for n=")
+        (display n)
+        (display " and k=")
+        (display k)
+        (display "\n\n")
+      )
+      (if (= 0 (display-if-ok (get-data n k) n k))
+        (run-test n k (- totalTries 1))
+        (display "Successfully found a solution\n\n")
+      )
+    )
+  )
+)
+     
+
+(define n 10)
+(define k 5)
+
+(run-test n k 1000)
