@@ -4,26 +4,29 @@
 (define (makelist n)
   (if (= n 1)
     (list 1)
-    (cons n (makelist (- n 1) ) )
-  )
-)
+    (cons n (makelist (- n 1)))))
 
 
 ; Randomize the list
-(define (random-sort list)
-  (sort list
+(define (random-sort lst)
+  (sort lst
     (lambda (x y)
-      (equal? 0 (random 2)) 
-    )
-  )
-)
+      (equal? 0 (random 2)))))
 
 
-; Break into k-sized tuples
+; Perform ascending sort of list
+(define (asc-sort lst)
+  (sort lst
+    (lambda (x y)
+      (< x y))))
+
+
+; Break into k-sized groups
 (define (split-by lst k)
   (if (not (null? lst))
-    (cons (sort (take lst k) < ) (split-by (drop lst k) k) )
+    (cons (asc-sort (take lst k) ) (split-by (drop lst k) k) )
     '() ))
+
 
 ; Number of occurences in a list
 (define (occurence x lst)
@@ -39,112 +42,13 @@
   (split-by (random-sort (makelist n)) k))
 
 
-; Make all groupings
-(define (make-groupings n k num)
-  (if (= num 1)
-    (cons (split-by (random-sort (makelist n)) k) '() ) 
-    (cons (split-by (random-sort (makelist n)) k) (make-groupings n k (- num 1) ))))
-  
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; Sorting borrowed from the following web page
-;;; http://groups.engin.umd.umich.edu/CIS/course.des/cis400/scheme/sorts.html
-;;; (merge! a b less?)
-;;; takes two sorted lists a and b and smashes their cdr fields to form a
-;;; single sorted list including the elements of both.
-;;; Note:  this does _not_ accept vectors.
-
-(define (merge! a b less?)
-    (define (loop r a b)
-         (if (less? (car b) (car a))
-             (begin
-                 (set-cdr! r b)
-                 (if (null? (cdr b))
-                     (set-cdr! b a)
-                     (loop b a (cdr b)) ))
-             ;; (car a) <= (car b)
-             (begin
-                 (set-cdr! r a)
-                 (if (null? (cdr a))
-                     (set-cdr! a b)
-                     (loop a (cdr a) b)) )) )
-    (cond
-         ((null? a) b)
-         ((null? b) a)
-         ((less? (car b) (car a))
-             (if (null? (cdr b))
-                 (set-cdr! b a)
-                 (loop b a (cdr b)))
-             b)
-         (else ; (car a) <= (car b)
-             (if (null? (cdr a))
-                 (set-cdr! a b)
-                 (loop a (cdr a) b))
-             a)))
-
-
-;;; (sort! sequence less?)
-;;; sorts the list or vector sequence destructively.  It uses a version
-;;; of merge-sort invented, to the best of my knowledge, by David H. D.
-;;; Warren, and first used in the DEC-10 Prolog system.  R. A. O'Keefe
-;;; adapted it to work destructively in Scheme.
-
-(define (sort! seq less?)
-    (define (step n)
-         (cond
-             ((> n 2)
-                 (let* ((j (quotient n 2))
-                        (a (step j))
-                        (k (- n j))
-                        (b (step k)))
-                     (merge! a b less?)))
-             ((= n 2)
-                 (let ((x (car seq))
-                       (y (cadr seq))
-                       (p seq))
-                     (set! seq (cddr seq))
-                     (if (less? y x) (begin
-                         (set-car! p y)
-                         (set-car! (cdr p) x)))
-                     (set-cdr! (cdr p) '())
-                     p))
-             ((= n 1)
-                 (let ((p seq))
-                     (set! seq (cdr seq))
-                     (set-cdr! p '())
-                     p))
-             (else
-                 '()) ))
-    (if (vector? seq)
-         (let ((n (vector-length seq))
-               (vector seq))                     ; save original vector
-             (set! seq (vector->list seq))       ; convert to list
-             (do ((p (step n) (cdr p))           ; sort list destructively
-                  (i 0 (+ i 1)))                         ; and store elements back
-                 ((null? p) vector)              ; in original vector
-                 (vector-set! vector i (car p)) ))
-         ;; otherwise, assume it is a list
-         (step (length seq)) ))
-
-
-;;; (sort sequence less?)
-;;; sorts a vector or list non-destructively.  It does this by sorting a
-;;; copy of the sequence
-(define (sort seq less?)
-    (if (vector? seq)
-         (list->vector (sort! (vector->list seq) less?))
-         (sort! (append seq '()) less?)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
+; Appends the assignement list groupings into a single list
 (define (append . lsts)
   (cond
     ((null? lsts) '())
     ((null? (car lsts)) (apply append (cdr lsts)))
     (else (cons (caar lsts) (apply append (cdar lsts) (cdr lsts))))))
+
 
 ; Break into k-sized tuples, no sorting of results
 (define (split-by-no-sort lst k)
@@ -152,83 +56,66 @@
     (cons (take lst k) (split-by-no-sort (drop lst k) k) )
     '() ))
 
+
+; Determines the total number of times a grouping is repeated
+;  within the 8 assignment groupings
 (define (total-occurences lst)
   (if (null? lst) 
     0
     (+ 
       (total-occurences (cdr lst)) 
-      (occurence (car lst) (cdr lst) ) 
-    )
-  )
-)
+      (occurence (car lst) (cdr lst)))))
 
+
+; Returns the width in which to display the student number
+(define (num-width)
+  (if (< n 10)
+    1
+    (if (< n 100)
+      2
+      3)))
+
+
+; Places the student number to display into an appropriately
+;  sized field based on the number of students (i.e. 3 spaces
+;  if n >= 100, 2 spaces if n >= 10, or 1)
 (define (format-value x)
   (string-append
     (make-string 
-      (- 2 (string-length x)) 
-      #\ 
-    ) 
-    x
-  )
-)
+      (- (num-width) (string-length x)) 
+      #\ ) x ))
 
+
+; Displays the students within a group to the screen in a formatted
+;  way to allow all groups to line up
 (define (format-cell lst)
   (if (not (null? lst))
     (begin
       (display (format-value (number->string (car (take lst 1)) )))
       (if (> (length lst) 1)
-        (display " ")
-      )
-      (format-cell (drop lst 1))
-    )
-  )
-)
+        (display " "))
+      (format-cell (drop lst 1)))))
 
+
+; Displays an individual group to the screen
 (define (format-group lst)
   (display "(")
   (format-cell lst)
-  (display ")")
-)
+  (display ")"))
 
+  
+
+; Responsible for displaying an 'assignment' in a formatted
+;  manner
 (define (display-groups lst)
   (if (not (null? lst))
     (begin
       (format-group (car (take lst 1)) )
       (display " ")
-      (display-groups (drop lst 1))
-    )
-  )
-) 
-  
-(define (display-the-list lst n idx)
-  (if (not (null? lst))
-    (begin 
-      (display (vector-ref msgs idx))
-      (display-groups (take lst n))
-      (display "\n")
-      (display-the-list (drop lst n) n (+ idx 1) )
-    )
-  )
-)
-
-(define (display-if-ok lst n k )
-  (if (= (total-occurences lst) 0)
-    (begin
-      (display-the-list lst (/ n k) 0)
-      1
-    )
-    0
-  )
-)
+      (display-groups (drop lst 1))))) 
 
 
-;(display (list-of-lists 10 2 2) )
-;(display (split-by (list-of-lists 10 2 2) 4 ))
-;(display (occurence (cons '1 '(3)) (split-by (cons '1 '(2 3 4)) 2) ))
-;(display (make-group 10 2))
-;(display (make-groupings 10 2 8))
-
-
+; The messages to precede the data when displayed
 (define msgs 
   (vector 
     "\n\nAssignment1: " 
@@ -238,13 +125,30 @@
     "Assignment4: "
     "Assignment5: "
     "Assignment6: "
-    "Final Exam:  "
-  )
-)
+    "Final Exam:  "))
 
-;(display (random-sort (makelist 40) ) )
-;(display "\n")
 
+; Displays the list to the screen
+(define (display-the-list lst n idx)
+  (if (not (null? lst))
+    (begin 
+      (display (vector-ref msgs idx))
+      (display-groups (take lst n))
+      (display "\n")
+      (display-the-list (drop lst n) n (+ idx 1)))))
+
+
+; If list is OK, prints tot he screen and returns a 1
+; If list is not OK (has a repeated group), a 0 is returned
+(define (display-if-ok lst n k )
+  (if (= (total-occurences lst) 0)
+    (begin
+      (display-the-list lst (/ n k) 0) 
+      1 )
+    0))
+
+
+; Creates the k-sized grouping for all 8 assignments
 (define (get-data n k)
   (split-by
     (append 
@@ -255,13 +159,12 @@
       (random-sort (makelist n)) 
       (random-sort (makelist n)) 
       (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-    )
-    k
-  )
-)
+      (random-sort (makelist n)))
+    k))
 
 
+; Verifies the test can be run (number of students is divisible by
+;  group size), then starts recursively looking for a solution
 (define (run-test n k totalTries)
   (if (not (= (modulo n k) 0))
     (begin
@@ -269,26 +172,22 @@
       (display n)
       (display " and k=")
       (display k)
-      (display "\n\n")
-    )
+      (display "\n\n"))
     (if (<= totalTries 0)
       (begin
         (display "Could not find a solution for n=")
         (display n)
         (display " and k=")
         (display k)
-        (display "\n\n")
-      )
+        (display "\n\n"))
       (if (= 0 (display-if-ok (get-data n k) n k))
         (run-test n k (- totalTries 1))
-        (display "Successfully found a solution\n\n")
-      )
-    )
-  )
-)
+        (display "Successfully found a solution\n\n")))))
      
 
-(define n 10)
-(define k 5)
+(define n 20)
+(define k 4)
 
+
+; Entry point
 (run-test n k 1000)
