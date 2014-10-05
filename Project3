@@ -53,7 +53,7 @@
 (define (get-all-groupings x)
   (if (= x 0)
     '()
-    (append (random-sort (makelist n)) (get-test (- x 1)))))
+    (append (random-sort (makelist n)) (get-all-groupings (- x 1)))))
 
 
 ; Break into k-sized tuples, no sorting of results
