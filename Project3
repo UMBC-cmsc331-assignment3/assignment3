@@ -218,7 +218,6 @@
 ;    - description
 ;    - inputs
 ;    - return value
-; 4. Figure out how to multiple fields in a single display
 
 ; Performs actual test 
 (run-test n k iters iters)
