@@ -1,5 +1,4 @@
 
-
 ; Make a list of n length
 (define (makelist n)
   (if (= n 1)
@@ -50,6 +49,13 @@
     (else (cons (caar lsts) (apply append (cdar lsts) (cdr lsts))))))
 
 
+; gets random distribution of all students over all assignements
+(define (get-all-groupings x)
+  (if (= x 0)
+    '()
+    (append (random-sort (makelist n)) (get-test (- x 1)))))
+
+
 ; Break into k-sized tuples, no sorting of results
 (define (split-by-no-sort lst k)
   (if (not (null? lst))
@@ -68,12 +74,10 @@
 
 
 ; Returns the width in which to display the student number
-(define (num-width)
+(define (num-width n)
   (if (< n 10)
     1
-    (if (< n 100)
-      2
-      3)))
+    (+ 1 (num-width (/ n 10)))))
 
 
 ; Places the student number to display into an appropriately
@@ -82,7 +86,7 @@
 (define (format-value x)
   (string-append
     (make-string 
-      (- (num-width) (string-length x)) 
+      (- (num-width n) (string-length x)) 
       #\ ) x ))
 
 
@@ -104,7 +108,6 @@
   (display ")"))
 
   
-
 ; Responsible for displaying an 'assignment' in a formatted
 ;  manner
 (define (display-groups lst)
@@ -138,7 +141,7 @@
       (display-the-list (drop lst n) n (+ idx 1)))))
 
 
-; If list is OK, prints tot he screen and returns a 1
+; If list is OK, prints to the screen and returns a 1
 ; If list is not OK (has a repeated group), a 0 is returned
 (define (display-if-ok lst n k )
   (if (= (total-occurences lst) 0)
@@ -150,22 +153,12 @@
 
 ; Creates the k-sized grouping for all 8 assignments
 (define (get-data n k)
-  (split-by
-    (append 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)) 
-      (random-sort (makelist n)))
-    k))
+  (split-by (get-all-groupings 8) k ))
 
 
 ; Verifies the test can be run (number of students is divisible by
 ;  group size), then starts recursively looking for a solution
-(define (run-test n k totalTries)
+(define (run-test n k iters totalTriesRemaining)
   (if (not (= (modulo n k) 0))
     (begin
       (display "Can not form full groups of students with n=")
@@ -173,21 +166,62 @@
       (display " and k=")
       (display k)
       (display "\n\n"))
-    (if (<= totalTries 0)
+    (if (<= totalTriesRemaining 0)
       (begin
         (display "Could not find a solution for n=")
         (display n)
         (display " and k=")
         (display k)
-        (display "\n\n"))
+        (display " trying ")
+        (display iters)
+        (display " times.\n\n"))
       (if (= 0 (display-if-ok (get-data n k) n k))
-        (run-test n k (- totalTries 1))
+        (run-test n k iters (- totalTriesRemaining 1))
         (display "Successfully found a solution\n\n")))))
      
 
-(define n 20)
-(define k 4)
+
+; Basic method to retrieve user input
+(define prompt-read (lambda (Prompt)
+   (display Prompt)
+   (read)))
+
+; Get input from the user
+(define (welcome-page)
+  (display "\n\nStudent Grouping Program\n\n")
+  (display "This program will attempt to group students into set\n")
+  (display "sized groups over eight events without repeating group\n")
+  (display "composition. It does so by randomly grouping students\n")
+  (display "until a satisfactory solution is found, or until the max\n")
+  (display "number of attempts is performed, at which time a message\n")
+  (display "indicating no solution could be found is displayed.\n\n")
+  (display "The user is prompted for the class size (n), group size (k),\n")
+  (display "and the number of iterations to try before failing (1000 is\n")
+  (display "recommended). Note the number of students must be divisible\n")
+  (display "by the group size (n%k=0), or an error will be generated.\n\n") 
+)
 
 
 ; Entry point
-(run-test n k 1000)
+(welcome-page)
+(define n (prompt-read "\n\nEnter number of students: "))
+(define k (prompt-read "Enter people per group: "))
+(define iters (prompt-read "Attempts: "))
+
+
+; todos
+; 1. do error checking
+;   number of students > 0 and less than or equal to (say) 1000
+;   k must be > 0
+;   k must be < n
+;   iters must be > 0
+; 2. Add header block to file (name of program, description, name(s), class, professor, etc...
+; 3. Add common header to each function
+;    - name
+;    - description
+;    - inputs
+;    - return value
+; 4. Figure out how to multiple fields in a single display
+
+
+(run-test n k iters iters)
