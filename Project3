@@ -1,7 +1,6 @@
-
 ; Make a list of n length
 (define (makelist n)
-  (if (= n 1)
+  (if (<= n 1)
     (list 1)
     (cons n (makelist (- n 1)))))
 
@@ -28,6 +27,8 @@
 
 
 ; Number of occurences in a list
+; x is the grouping you're looking for
+; lst is the list to scan
 (define (occurence x lst)
   (if (null? lst) 
     0
@@ -56,15 +57,8 @@
     (append (random-sort (makelist n)) (get-all-groupings (- x 1)))))
 
 
-; Break into k-sized tuples, no sorting of results
-(define (split-by-no-sort lst k)
-  (if (not (null? lst))
-    (cons (take lst k) (split-by-no-sort (drop lst k) k) )
-    '() ))
-
-
 ; Determines the total number of times a grouping is repeated
-;  within the 8 assignment groupings
+; within the 8 assignment groupings
 (define (total-occurences lst)
   (if (null? lst) 
     0
@@ -132,17 +126,21 @@
 
 
 ; Displays the list to the screen
-(define (display-the-list lst n idx)
+; idx is the index in to the messages that preced the data
+; g is the number of groups (n/k)
+(define (display-the-list lst g idx)
   (if (not (null? lst))
     (begin 
       (display (vector-ref msgs idx))
-      (display-groups (take lst n))
+      (display-groups (take lst g))
       (display "\n")
-      (display-the-list (drop lst n) n (+ idx 1)))))
+      (display-the-list (drop lst g) g (+ idx 1)))))
 
 
-; If list is OK, prints to the screen and returns a 1
+; If list is OK, prints to the screen and returns a 1 (means done)
 ; If list is not OK (has a repeated group), a 0 is returned
+; n is the number of students
+; k is the group size
 (define (display-if-ok lst n k )
   (if (= (total-occurences lst) 0)
     (begin
@@ -158,25 +156,19 @@
 
 ; Verifies the test can be run (number of students is divisible by
 ;  group size), then starts recursively looking for a solution
-(define (run-test n k iters totalTriesRemaining)
+; n is the number of students
+; k is the group size
+; iters is the total number of tries to find a solution
+; remaining is the number of tries left
+(define (run-test n k iters remaining)
   (if (not (= (modulo n k) 0))
     (begin
-      (display "Can not form full groups of students with n=")
-      (display n)
-      (display " and k=")
-      (display k)
-      (display "\n\n"))
-    (if (<= totalTriesRemaining 0)
+       (prnt "Can not form full groups of students with n=" n " and k=" k "\n\n"))
+    (if (<= remaining 0)
       (begin
-        (display "Could not find a solution for n=")
-        (display n)
-        (display " and k=")
-        (display k)
-        (display " trying ")
-        (display iters)
-        (display " times.\n\n"))
+	 (prnt "Could not find a solution for n=" n " and k=" k " trying " iters " times.\n\n"))
       (if (= 0 (display-if-ok (get-data n k) n k))
-        (run-test n k iters (- totalTriesRemaining 1))
+        (run-test n k iters (- remaining 1))
         (display "Successfully found a solution\n\n")))))
      
 
@@ -202,7 +194,12 @@
 )
 
 
-; Entry point
+
+(define (prnt . args)
+  (for-each display args))
+
+
+; Prompts for user input
 (welcome-page)
 (define n (prompt-read "\n\nEnter number of students: "))
 (define k (prompt-read "Enter people per group: "))
@@ -223,5 +220,5 @@
 ;    - return value
 ; 4. Figure out how to multiple fields in a single display
 
-
+; Performs actual test 
 (run-test n k iters iters)
