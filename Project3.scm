@@ -1,3 +1,21 @@
+;--------------------------------------------------------------------
+;Program Name: Assignment3
+;Authors     : Steven Hudak
+;              Patrick Bettinger
+;              Christopher Blake
+;              Tae Song
+;Date        : 10/7/2014
+;	This program will attempt to group students into set sized 
+;groups over eight events without repeating group composition. It 
+;does so by randomly grouping students until a satisfactory solution
+;is found, or until the max number of attempts is performed, at which
+;time a message indicating no solution could be found is displayed. 
+;The user is prompted for the class size (n), group size (k), and the
+;number of iterations to try before failing (1000 is recommended). 
+;Note the number of students must be divisible by the group size 
+;(n%k=0), or an error will be generated.
+;--------------------------------------------------------------------
+
 ; Make a list of n length
 (define (makelist n)
   (if (<= n 1)
