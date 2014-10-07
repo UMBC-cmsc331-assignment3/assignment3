@@ -205,6 +205,8 @@
 (if (< n 1)
 	(define n (prompt-read "There cannot be a negative number of students. Enter number of students: ")))
 (define k (prompt-read "Enter people per group: "))
+(if (and (> k 0) (< k n))
+	(define k (prompt-read "The number of people cannot be negative and cannot be greater than number of students. Enter people per group: ")))
 (define iters (prompt-read "Attempts: "))
 
 
