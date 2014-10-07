@@ -202,6 +202,8 @@
 ; Prompts for user input
 (welcome-page)
 (define n (prompt-read "\n\nEnter number of students: "))
+(if (< n 1)
+	(n (prompt-read "There cannot be a negative number of students. Enter number of students: ")))
 (define k (prompt-read "Enter people per group: "))
 (define iters (prompt-read "Attempts: "))
 
